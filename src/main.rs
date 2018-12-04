@@ -4,13 +4,23 @@ extern crate regex;
 use regex::Regex;
 use aoc_2018::aoc_input::INPUT_3;
 
-#[derive(Debug)]
+#[derive(Eq, Debug, Clone)]
 struct Rectangle {
     id: String,
     x1: usize,
     x2: usize,
     y1: usize,
     y2: usize,
+}
+
+impl PartialEq for Rectangle {
+    fn eq(&self, other: &Self) -> bool {
+        return self.id.eq(&other.id)
+            & self.x1.eq(&other.x1)
+            & self.x2.eq(&other.x2)
+            & self.y1.eq(&other.y1)
+            & self.y2.eq(&other.y2);
+    }
 }
 
 fn main() {
@@ -38,11 +48,10 @@ fn main() {
 
         rectangles.push(rectangle)
     }
-    println!("{:?}", rectangles);
 
     let mut grid = [[0; 1000]; 1000];
 
-    for rectangle in rectangles {
+    for rectangle in rectangles.clone() {
         for x in rectangle.x1..=rectangle.x2 {
             for y in rectangle.y1..=rectangle.y2 {
                 let c = grid[x][y];
@@ -51,29 +60,40 @@ fn main() {
         }
     }
 
-    let mut overlaps = 0;
+    let mut overlapping_cells = 0;
 
     for row in grid.iter() {
         for cell in row.iter() {
             if *cell > 1 {
-                overlaps += 1;
+                overlapping_cells += 1;
             }
         }
     }
 
-    println!("part 1: found {} overlapping rectangles", overlaps);
+    println!("part 1: found {} overlapping rectangles", overlapping_cells);
 
+    for rect in rectangles.clone() {
+        let mut overlaps_another = false;
+        for other in rectangles.clone() {
+            if !rect.clone().eq(&other)
+                & overlaps(rect.clone(), other) {
+                overlaps_another = true;
+            }
+        }
 
-//    let squares = inputs;
+        if !overlaps_another {
+            println!("part 2: rectangle with id {} overlaps no other", rect.id);
+        }
+    }
 }
 
-fn overlap(a: Rectangle, b: Rectangle) -> bool {
-    if (a.x1 <= b.x2)
-        & (a.x2 >= b.x1)
-        & (a.y1 >= b.y2)
-        & (a.y2 <= b.y1) {
-        return true;
+fn overlaps(a: Rectangle, b: Rectangle) -> bool {
+    if (a.x1 > b.x2)
+        | (b.x1 > a.x2)
+        | (a.y1 > b.y2)
+        | (b.y1 > a.y2) {
+        return false;
     }
 
-    return false;
+    return true;
 }
